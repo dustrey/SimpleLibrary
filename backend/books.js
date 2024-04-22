@@ -14,20 +14,46 @@ router.get('/checkedout', async (req,res) =>
     res.send(books);
 })
 
-router.put('/checkout/:_id', async (req,res) => 
+router.put('/checkout/:_id', async (req, res) => 
 {
-    const book = await Book.findByIdAndUpdate(req.params._id, {Status: "Checked Out"}, 
+    const { checkedOutBy, dueDate } = req.body;
+    try {
+      const book = await Book.findByIdAndUpdate(req.params._id, 
+        { Status: "Checked Out", CheckedOutBy: checkedOutBy, DueDate: dueDate },
         { new: true });
-    if (!book) return res.status(404).send('The book with the given ID was not found.')
-    res.send(book);
-})
+      if (!book) {
+        return res.status(404).send('The book with the given ID was not found.');
+      }
+      res.send(book);
+    } catch (error) {
+      console.error('Error checking out book:', error);
+      res.status(500).send('Server error');
+    }
+  });
 
-router.put('/checkin/:_id', async (req,res) =>
-{
-    const book = await Book.findByIdAndUpdate(req.params._id, {Status: "Available"}, 
-        { new: true });
-        if (!book) return res.status(404).send('The book with the given ID was not found.')
+  router.put('/checkin/:_id', async (req, res) => 
+  {
+    try {
+        const book = await Book.findByIdAndUpdate(
+            req.params._id,
+            {
+                Status: "Available",
+                CheckedOutBy: "", 
+                DueDate: ""     
+            },
+            { new: true }  
+        );
+        if (!book) 
+        {
+            return res.status(404).send('The book with the given ID was not found.');
+        }
         return res.send(book);
-})
+    } catch (error) 
+    {
+        console.error('Error checking in book:', error);
+        res.status(500).send('Server error');
+    }
+});
+
 
 module.exports = router;
